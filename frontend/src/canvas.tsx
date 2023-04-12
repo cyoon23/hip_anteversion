@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface CanvasProps {
     width: number;
@@ -26,78 +26,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
   // start or end change, automatically
   // redraw everything
   useEffect(() => {
-    if (startBool && endBool) {
-      const currCoor = [start, end] as [Coordinate, Coordinate];
-      updateCoordinateList([...coordinateList, currCoor]);
-  }
-    // restoreImage(coordinateList.length - 1);
-    if (!canvasRef.current) return;
-
-    // clear canvasRef
-    const ctx = canvasRef.current.getContext("2d");
-    if (!ctx) return;
-    const i = new Image();
-    i.src = file;
-    i.onload = () => {
-      ctx.drawImage(i, 0, 0, i.width*scale, i.height*scale );
-
-      // if only start
-      if (startBool && !endBool) {
-        ctx.fillRect(start.x, start.y, 1, 1);
-      }
-      else if (startBool && endBool) {
-        // draw the line
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.closePath();
-        ctx.stroke();
-        setStartBool(false);
-        setEndBool(false);
-      }
-    }
+    restoreImage(currStep);
   }, [isDrawing, start, end]);
-
-  function mousedown(e) {
-    setIsDrawing(true);
-    setStart({
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY
-    });
-    setEnd({
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY
-    });
-  }
-  function mousemove(e) {
-    if (!isDrawing) return;
-    setEnd({
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY
-    });
-  }
-  function mouseup(e) {
-    setIsDrawing(false);
-  }
-
-  const drawImage = (url) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return; 
-      const context = canvas.getContext('2d'); 
-      if (!context) return; 
-      const i = new Image();
-      i.src = url;
-      i.onload = () => { 
-          const scale1 = window.innerWidth/i.width;
-          const scale2 = window.innerHeight/i.height;
-          const scale = scale1 > scale2 ? scale1 : scale2;
-          saveScale(scale);
-          context.drawImage(i, 0, 0, i.width*scale, i.height*scale );
-          context.strokeStyle = 'red';
-          context.lineJoin = 'round';
-          context.lineWidth = 5;
-      }
-  }
 
   const restoreImage = (endIndex) => {
     if (!canvasRef.current) return;
@@ -107,14 +37,26 @@ const Canvas = ({ width, height }: CanvasProps) => {
     i.src = file;
     i.onload = () => {
       ctx.drawImage(i, 0, 0, i.width*scale, i.height*scale);
-      for (let i=0; i<=endIndex; i++) {
-        const [start, end] = coordinateList[i];
-        // draw the line
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.closePath();
-        ctx.stroke();
+      for (let i=0; i <= endIndex; i++) {
+        if (i === currStep && !endBool) {
+          ctx.fillStyle = 'red';
+          ctx.beginPath();
+          ctx.arc(start.x, start.y, 4, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+        else { 
+          const [startCoor, endCoor] = coordinateList[i];
+          // draw the line
+          ctx.beginPath();
+          ctx.moveTo(startCoor.x, startCoor.y);
+          ctx.lineTo(endCoor.x, endCoor.y);
+          ctx.closePath();
+          ctx.stroke();
+        }
+        if (i === currStep && startBool && endBool) {
+          setStartBool(false);
+          setEndBool(false);
+        }
       }
     }
   }
@@ -145,6 +87,25 @@ const Canvas = ({ width, height }: CanvasProps) => {
   //   }
   // }
 
+    const drawImage = (url) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return; 
+      const context = canvas.getContext('2d'); 
+      if (!context) return; 
+      const i = new Image();
+      i.src = url;
+      i.onload = () => { 
+          const scale1 = window.innerWidth/i.width;
+          const scale2 = window.innerHeight/i.height;
+          const scale = scale1 > scale2 ? scale1 : scale2;
+          saveScale(scale);
+          context.drawImage(i, 0, 0, i.width*scale, i.height*scale );
+          context.strokeStyle = 'red';
+          context.lineJoin = 'round';
+          context.lineWidth = 5;
+      }
+  }
+
     const onImageChange = event => {
         if (event.target.files && event.target.files[0] && !file.length) {
           let img = event.target.files[0];
@@ -156,28 +117,28 @@ const Canvas = ({ width, height }: CanvasProps) => {
     
     const handleClick = (e) => {
       if (!startBool) {
-        setStart({
+        const startCoor = {
           x: e.nativeEvent.offsetX,
           y: e.nativeEvent.offsetY
-        });
+        };
+        setStart(startCoor);
         setStartBool(true);
+        saveStep(currStep + 1);
       }
       else if (startBool && !endBool) {
-        setEnd({
+        const endCoor = {
           x: e.nativeEvent.offsetX,
           y: e.nativeEvent.offsetY
-        })
+        };
+        setEnd(endCoor)
+        updateCoordinateList([...coordinateList, [start, endCoor]]);
         setEndBool(true);
       }
     }
 
     return <>
         <input type="file" onChange={onImageChange} />
-        <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth} 
-        // onMouseDown={mousedown}
-        // onMouseMove={mousemove}
-        // onMouseUp={mouseup} 
-        onClick={handleClick}
+        <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth} onClick={handleClick}
         />
     </>;
 };
