@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import steps from './constants/steps.json';
 import { ellipse_parameters, measure_beta, measure_gamma, perp_line } from './Ellipse.tsx';
-
+import {RangeStepInput} from 'react-range-step-input';
 
 interface CanvasProps {
     width: number;
@@ -9,30 +9,30 @@ interface CanvasProps {
 }
 
 export type Coordinate = {
-    x: number | null;
-    y: number | null;
+    x: number;
+    y: number;
 };
 
 const Canvas = ({ width, height }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [file, setFile] = useState('');
     const [fileWidth, setWidth] = useState(0);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [start, setStart] = useState({x: null, y: null});
-    const [end, setEnd] = useState({x: null, y: null});
     const [coordinatesMap, updateCoordinates] = useState(steps);
     const [scale, saveScale] = useState(0);
     const [activeItem, setActiveItem] = useState(0);
     const [gamma, measureGamma] = useState(0);
     const [beta, measureBeta] = useState(0);
     const [ratio, measureRatio] = useState(0);
+    const [lineWidth, setLineWidth] = useState(5);
+    const [buttonColor, setColor] = useState('red');
+    const [listValues, setValues] = useState([] as {}[]);
 
   // draw effect – each time isDrawing,
   // start or end change, automatically
   // redraw everything
   useEffect(() => {
     restoreImage(activeItem);
-  }, [isDrawing, start, end]);
+  }, [buttonColor, lineWidth, coordinatesMap, activeItem]);
 
   const restoreImage = (endIndex) => {
     if (!canvasRef.current) return;
@@ -42,12 +42,13 @@ const Canvas = ({ width, height }: CanvasProps) => {
     i.src = file;
     i.onload = () => {
       ctx.drawImage(i, 0, 0, i.width*scale, i.height*scale);
+      ctx.strokeStyle = buttonColor;
       setWidth(i.width*scale);
       for (let idx=1; idx <= endIndex; idx++) {
         const currNode = coordinatesMap[idx.toString()];
         if (currNode.type === 'line' && currNode.coor.length === 1) {
           // Fill out dot
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = buttonColor;
           ctx.beginPath();
           ctx.arc(currNode.coor[0].x, currNode.coor[0].y, 4, 0, 2 * Math.PI);
           ctx.fill();
@@ -59,6 +60,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
           ctx.moveTo(startCoor.x, startCoor.y);
           ctx.lineTo(endCoor.x, endCoor.y);
           ctx.closePath();
+          ctx.lineWidth = lineWidth;
           ctx.stroke();
         }
         else if (currNode.type === 'ellipse' && 'parentNode' in currNode && [...currNode.coor, ...coordinatesMap[currNode.parentNode].coor].length === 3) {
@@ -99,28 +101,30 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const canvas = canvasRef.current;
     if (!canvas) return; 
     const context = canvas.getContext('2d'); 
-    if (!context) return; 
+    if (!context) return;
     const i = new Image();
     i.src = url;
     i.onload = () => { 
         const scale1 = window.innerWidth/i.width,
           scale2 = window.innerHeight/i.height,
-          scale = scale1 > scale2 ? scale1 : scale2;
+          scale = scale1 > scale2 ? scale2 : scale1;
         saveScale(scale);
+        canvas.width = i.width*scale;
+        canvas.height = i.height*scale;
         context.drawImage(i, 0, 0, i.width*scale, i.height*scale );
-        context.strokeStyle = 'red';
+        context.strokeStyle = buttonColor;
         context.lineJoin = 'round';
-        context.lineWidth = 5;
+        context.lineWidth = lineWidth;
     }
   }
 
   const onImageChange = event => {
-      if (event.target.files && event.target.files[0] && !file.length) {
+      if (event.target.files && event.target.files[0]) {
         let img = event.target.files[0];
         const url = URL.createObjectURL(img);
         setFile(url);
         drawImage(url);
-        setActiveItem(1);
+       onClearAllClick();
       }
     };
     
@@ -130,7 +134,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
         x: e.nativeEvent.offsetX,
         y: e.nativeEvent.offsetY
       };
-      setStart(startCoor);
       updateCoordinates({
         ...coordinatesMap,
         [activeItem.toString()]: {
@@ -145,7 +148,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
         x: e.nativeEvent.offsetX,
         y: e.nativeEvent.offsetY
       };
-      setEnd(endCoor)
       updateCoordinates({
         ...coordinatesMap,
         [activeItem.toString()]: {
@@ -175,20 +177,15 @@ const Canvas = ({ width, height }: CanvasProps) => {
       URL.revokeObjectURL(a.href);
   }
 
-  const csvFormat = (dict) => {
-    return [Object.keys(dict).join(','), Object.values(dict).join(',')].join('\n');
+  const convertToCSV = (arr) => {
+    const array = [Object.keys(arr[0])].concat(arr);
+    return array.map(item => {
+      return Object.values(item).toString()
+    }).join('\n')
   }
 
-  const exportCsv = (filename) => {
-    const ant = 48.05*ratio-0.3,
-      jsonData = {
-      "Abduction Angle": gamma,
-      "S/L": ratio,
-      "Anteversion (Widmer)": ant,
-      "Anteversion (Liaw)": beta,
-    },
-    json = csvFormat(jsonData),
-    blob = new Blob([json], { type: 'text/csv' }),
+  const downloadCsv = (filename, json, text) => {
+    const blob = new Blob([json], { type: text ? 'octet/stream' : 'text/csv' }),
     url = window.URL.createObjectURL(blob),
     a = document.createElement('a');
     a.setAttribute('href', url);
@@ -196,15 +193,34 @@ const Canvas = ({ width, height }: CanvasProps) => {
     a.click();
   }
 
-  const onPrevClick = (e) => {
+  const jsonData = () => {
+    const ant = 48.05*ratio-0.3,
+      jsonData = {
+        "Abduction Angle": gamma,
+        "S/L": ratio,
+        "Anteversion (Widmer)": ant,
+        "Anteversion (Liaw)": beta,
+      };
+    return jsonData;
+  }
+
+  const exportCsv = (filename, exportAll = false, text = false) => {
+    const data = jsonData(),
+    json = convertToCSV(exportAll ? [...listValues, data] : [data]);
+    downloadCsv(filename, json, text);
+  }
+
+  const onPrevClick = () => {
     setActiveItem(activeItem - 1);
   }
 
-  const onNextClick = (e) => {
-    setActiveItem(activeItem + 1);
+  const onNextClick = () => {
+    if ((coordinatesMap[activeItem.toString()].type === 'ellipse' && coordinatesMap[activeItem.toString()].coor.length === 1) || 
+    (coordinatesMap[activeItem.toString()].type === 'line' && coordinatesMap[activeItem.toString()].coor.length === 2)) 
+      setActiveItem(activeItem + 1);
   }
 
-  const onClearClick = (e) => {
+  const onClearClick = () => {
     updateCoordinates({
       ...coordinatesMap,
       [activeItem.toString()]: {
@@ -212,23 +228,19 @@ const Canvas = ({ width, height }: CanvasProps) => {
         coor: []
       }
     });
-    restoreImage(activeItem);
   }
 
-  const onClearAllClick = (e) => {
+  const onClearAllClick = () => {
     updateCoordinates(steps);
     setActiveItem(1);
-    restoreImage(activeItem);
   }
 
-  const onUndoClick = (e) => {
+  const onUndoClick = () => {
     let currActive = activeItem;
     if (!coordinatesMap[activeItem.toString()].coor.length) {
       setActiveItem(activeItem - 1);
       currActive -= 1;
-      setEnd({x: null, y: null});
     }
-    else setStart({x: null, y: null});
     updateCoordinates({
       ...coordinatesMap,
       [currActive.toString()]: {
@@ -236,7 +248,14 @@ const Canvas = ({ width, height }: CanvasProps) => {
         coor: coordinatesMap[currActive.toString()].coor.slice(0, -1)
       }
     });
-    restoreImage(currActive);
+  }
+
+  const onLineWidthChange = (e) => {
+    setLineWidth(e.target.value);
+  }
+
+  const onColorButtonClick = (e) => {
+    setColor(e.target.value);
   }
 
   return <>
@@ -244,13 +263,25 @@ const Canvas = ({ width, height }: CanvasProps) => {
       <h2> { activeItem > 0 ? `Step ${activeItem}: ${steps[activeItem.toString()].text}` : '' } </h2>
       <div> { activeItem > 0 ? `${steps[activeItem.toString()].supp}` : '' } </div>
       <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth} onClick={handleClick} />
+      { activeItem > 0 ? <div style={{display: 'flex', flexDirection: 'row'}}> 
+      Scale line width: <RangeStepInput min={1} max={10} value={lineWidth} step={1} onChange={onLineWidthChange} />
+      {['red', 'blue', 'green', 'purple'].map(color => 
+        <button 
+          key={color} 
+          onClick={onColorButtonClick} 
+          value={color} 
+          style={{borderRadius: '50%', backgroundColor: color, border: 'none', padding: '8px', marginRight: '4px'}} />)}
+      </div> : '' }
+      <br></br>
       { activeItem > 1 ? <button onClick={onPrevClick}> Back </button> : '' }
       { activeItem < Object.keys(steps).length - 1 ? <button onClick={onNextClick}> Next </button> : '' }
       { <button onClick={onUndoClick}> Undo </button> }
       { <button onClick={onClearClick}> Clear </button> }
       { <button onClick={onClearAllClick}> Clear All </button> }
-      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportData('text')}> Download text </button> : '' }
-      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('text')}> Download CSV </button> : '' }
+      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('textData', false, true)}> Download text </button> : '' }
+      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('oneData')}> Download CSV </button> : '' }
+      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('textAllData', true, true)}> Download all text </button> : '' }
+      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('allData', true)}> Download all CSV </button> : '' }
   </>;
 };
 
