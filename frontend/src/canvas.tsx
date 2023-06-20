@@ -25,6 +25,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [ratio, measureRatio] = useState(0);
     const [lineWidth, setLineWidth] = useState(5);
     const [buttonColor, setColor] = useState('red');
+    const [id, setId] = useState('');
     const [listValues, setValues] = useState([] as {}[]);
 
   // draw effect – each time isDrawing,
@@ -33,6 +34,14 @@ const Canvas = ({ width, height }: CanvasProps) => {
   useEffect(() => {
     restoreImage(activeItem);
   }, [buttonColor, lineWidth, coordinatesMap, activeItem]);
+
+  useEffect(() => {
+    if (activeItem === 5) {
+      const newData = jsonData(),
+        arr = listValues.filter(val => 'ID' in val && val.ID === id).length > 0 ? listValues.map((val => 'ID' in val && val.ID === id ? newData : val)) : [...listValues, newData];
+      setValues(arr);
+  }
+  }, [gamma, beta, ratio])
 
   const restoreImage = (endIndex) => {
     if (!canvasRef.current) return;
@@ -93,8 +102,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
       y1 = m * (0 - startCoor.x) + startCoor.y,
       y2 = m * (fileWidth - startCoor.x) + startCoor.y;
     return [{x: 0, y: y1}, {x: fileWidth, y: y2}];
-
-
   }
 
   const drawImage = (url) => {
@@ -126,7 +133,12 @@ const Canvas = ({ width, height }: CanvasProps) => {
         drawImage(url);
        onClearAllClick();
       }
+      setId(event.target.value.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, ""));
     };
+
+  const onTextChange = (e) => {
+    setId(e.target.value);
+  }
     
   const handleClick = (e) => {
     if (!coordinatesMap[activeItem.toString()].coor.length) {
@@ -159,24 +171,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
     }
   }
 
-  const exportData = (fileName) => {
-    const ant = 48.05*ratio-0.3,
-      jsonData = {
-      "Abduction Angle": gamma,
-      "S/L": ratio,
-      "Anteversion (Widmer)": ant,
-      "Anteversion (Liaw)": beta,
-    },
-      json = JSON.stringify(jsonData),
-      blob = new Blob([json], {type: "octet/stream"}),
-      url = window.URL.createObjectURL(blob),
-      a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(a.href);
-  }
-
   const convertToCSV = (arr) => {
     const array = [Object.keys(arr[0])].concat(arr);
     return array.map(item => {
@@ -196,6 +190,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
   const jsonData = () => {
     const ant = 48.05*ratio-0.3,
       jsonData = {
+        "ID": id,
         "Abduction Angle": gamma,
         "S/L": ratio,
         "Anteversion (Widmer)": ant,
@@ -205,9 +200,9 @@ const Canvas = ({ width, height }: CanvasProps) => {
   }
 
   const exportCsv = (filename, exportAll = false, text = false) => {
-    const data = jsonData(),
-    json = convertToCSV(exportAll ? [...listValues, data] : [data]);
+    const json = convertToCSV(exportAll ? listValues : [jsonData()]);
     downloadCsv(filename, json, text);
+    
   }
 
   const onPrevClick = () => {
@@ -260,6 +255,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
 
   return <>
       <input type="file" onChange={onImageChange} />
+      <>Image ID: <input type="text" value={id} onChange={onTextChange} /></>
       <h2> { activeItem > 0 ? `Step ${activeItem}: ${steps[activeItem.toString()].text}` : '' } </h2>
       <div> { activeItem > 0 ? `${steps[activeItem.toString()].supp}` : '' } </div>
       <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth} onClick={handleClick} />

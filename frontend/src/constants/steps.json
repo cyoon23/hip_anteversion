@@ -30,7 +30,7 @@
 },
 "5": {
     "text": "Click to download data.",
-    "supp": "",
+    "supp": "Download the current image's measurements, or  measurements of all annotated images, as a text or CSV file. To annotate another image, simply upload a new image.",
     "type": "",
     "parentNode": "",
     "coor": []
