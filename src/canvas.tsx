@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import steps from './constants/steps.json';
 import { ellipse_parameters, measure_beta, measure_gamma, perp_line } from './Ellipse.tsx';
 import {RangeStepInput} from 'react-range-step-input';
+import { Button, Container, Grid, Input, Segment, SemanticCOLORS } from 'semantic-ui-react';
+import React from 'react';
 
 interface CanvasProps {
     width: number;
@@ -27,6 +29,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [buttonColor, setColor] = useState('red');
     const [id, setId] = useState('');
     const [listValues, setValues] = useState([] as {}[]);
+    let fileInputRef;
 
   // draw effect – each time isDrawing,
   // start or end change, automatically
@@ -253,32 +256,69 @@ const Canvas = ({ width, height }: CanvasProps) => {
     setColor(e.target.value);
   }
 
-  return <>
-      <input type="file" onChange={onImageChange} />
-      <>Image ID: <input type="text" value={id} onChange={onTextChange} /></>
-      <h2> { activeItem > 0 ? `Step ${activeItem}: ${steps[activeItem.toString()].text}` : '' } </h2>
-      <div> { activeItem > 0 ? `${steps[activeItem.toString()].supp}` : '' } </div>
-      <canvas ref={canvasRef} height={window.innerHeight} width={window.innerWidth} onClick={handleClick} />
-      { activeItem > 0 ? <div style={{display: 'flex', flexDirection: 'row'}}> 
-      Scale line width: <RangeStepInput min={1} max={10} value={lineWidth} step={1} onChange={onLineWidthChange} />
-      {['red', 'blue', 'green', 'purple'].map(color => 
-        <button 
-          key={color} 
-          onClick={onColorButtonClick} 
-          value={color} 
-          style={{borderRadius: '50%', backgroundColor: color, border: 'none', padding: '8px', marginRight: '4px'}} />)}
-      </div> : '' }
-      <br></br>
-      { activeItem > 1 ? <button onClick={onPrevClick}> Back </button> : '' }
-      { activeItem < Object.keys(steps).length - 1 ? <button onClick={onNextClick}> Next </button> : '' }
-      { <button onClick={onUndoClick}> Undo </button> }
-      { <button onClick={onClearClick}> Clear </button> }
-      { <button onClick={onClearAllClick}> Clear All </button> }
-      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('textData', false, true)}> Download text </button> : '' }
-      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('oneData')}> Download CSV </button> : '' }
-      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('textAllData', true, true)}> Download all text </button> : '' }
-      { activeItem === Object.keys(steps).length - 1 ? <button onClick={() => exportCsv('allData', true)}> Download all CSV </button> : '' }
-  </>;
+  return <Segment basic padded='very'>
+      <Grid>
+        <Grid.Row columns={2} verticalAlign='middle'>
+        <Grid.Column floated='left'> 
+      <Button
+        content="Choose File"
+        labelPosition="left"
+        icon="file"
+        onClick={() => fileInputRef.click()}
+        style={{ marginRight: "10px"}}
+      />
+      <input
+        id="inputFile"
+        type="file"
+        hidden
+        ref={refParam => fileInputRef = refParam}
+        onChange={onImageChange} 
+      />
+      Image ID: <Input 
+                    placeholder="Image ID" 
+                    value={id} 
+                    onChange={onTextChange}
+                  />
+        </Grid.Column>
+        <Grid.Column floated='right'> 
+        { activeItem > 0 ?
+        <Grid columns={2} verticalAlign='middle'>
+          <Grid.Column style={{display: 'flex', flexDirection: 'row'}}> 
+            Line width: <RangeStepInput min={1} max={10} value={lineWidth} step={1} onChange={onLineWidthChange} style={{marginLeft: '10px'}} /> 
+          </Grid.Column>
+        <Grid.Column floated='right'>
+        {['red', 'blue', 'green', 'purple'].map(color => 
+          <Button 
+            circular
+            key={color}
+            color={color}
+            onClick={onColorButtonClick}
+            value={color}
+          />
+            )} 
+        </Grid.Column>
+            </Grid>
+             : '' }
+             </Grid.Column>
+        </Grid.Row>
+      </Grid>
+      <Segment basic>
+        <h2> { activeItem > 0 ? `Step ${activeItem}: ${steps[activeItem.toString()].text}` : '' } </h2>
+        <div> { activeItem > 0 ? `${steps[activeItem.toString()].supp}` : '' } </div>
+      </Segment>
+      { <canvas ref={canvasRef} height={activeItem > 0 ? window.innerHeight : 0} width={activeItem > 0 ? window.innerWidth : 0} onClick={handleClick} /> }
+      <Segment basic>
+        { activeItem > 1 ? <Button onClick={onPrevClick}> Back </Button> : '' }
+        { activeItem < Object.keys(steps).length - 1 && activeItem > 0 ? <Button onClick={onNextClick}> Next </Button> : '' }
+        { activeItem > 0 ? <Button onClick={onUndoClick}> Undo </Button> : '' }
+        {activeItem > 0 ? <Button onClick={onClearClick}> Clear </Button> : '' }
+        { activeItem > 0 ? <Button onClick={onClearAllClick}> Clear All </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('textData', false, true)}> Download text </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('oneData')}> Download CSV </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('textAllData', true, true)}> Download all text </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('allData', true)}> Download all CSV </Button> : '' }
+      </Segment>
+      </Segment>;
 };
 
 Canvas.defaultProps = {
