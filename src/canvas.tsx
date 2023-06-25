@@ -56,7 +56,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
               (val => 'ID' in val && val.ID === id ? coorData : val)
             ) : [...listCoorValues, coorData]
       );
-      console.log(listCoorValues);
   }
   }, [gamma, beta, ratio])
 
@@ -190,11 +189,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
 
   const convertToCSV = (arr) => {
     const array = [Object.keys(arr[0])].concat(arr);
-    console.log(arr);
-    console.log(array);
     return array.map(item => {
-      console.log(Object.values(item));
-      console.log(Object.values(item).toString());
       return Object.values(item).toString()
     }).join('\n')
   }
@@ -232,7 +227,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
       const coor = Object.values(coordinatesMap)[i+1].coor as Coordinate[];
       data[key] = '"[' + coor.map(val => [val.x, val.y]).toString() + ']"';
     })
-    console.log(data);
     return data;
   }
 
