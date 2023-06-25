@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import steps from './constants/steps.json';
 import { ellipse_parameters, measure_beta, measure_gamma, perp_line } from './Ellipse.tsx';
 import {RangeStepInput} from 'react-range-step-input';
-import { Button, Container, Grid, Input, Segment, SemanticCOLORS } from 'semantic-ui-react';
-import React from 'react';
+import { Button, Grid, Input, Segment } from 'semantic-ui-react';
 
 interface CanvasProps {
     width: number;
@@ -29,6 +28,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [buttonColor, setColor] = useState('red');
     const [id, setId] = useState('');
     const [listValues, setValues] = useState([] as {}[]);
+    const [listCoorValues, setCoorValues] = useState([] as {}[]);
     let fileInputRef;
 
   // draw effect – each time isDrawing,
@@ -41,8 +41,22 @@ const Canvas = ({ width, height }: CanvasProps) => {
   useEffect(() => {
     if (activeItem === 5) {
       const newData = jsonData(),
-        arr = listValues.filter(val => 'ID' in val && val.ID === id).length > 0 ? listValues.map((val => 'ID' in val && val.ID === id ? newData : val)) : [...listValues, newData];
-      setValues(arr);
+        coorData = coorJsonData();
+      setValues(
+        listValues.filter(
+        val => 'ID' in val && val.ID === id).length > 0 ? 
+          listValues.map(
+            (val => 'ID' in val && val.ID === id ? newData : val)
+          ) : [...listValues, newData]
+        );
+      setCoorValues(
+        listCoorValues.filter(
+          val => 'ID' in val && val.ID === id).length > 0 ? 
+            listCoorValues.map(
+              (val => 'ID' in val && val.ID === id ? coorData : val)
+            ) : [...listCoorValues, coorData]
+      );
+      console.log(listCoorValues);
   }
   }, [gamma, beta, ratio])
 
@@ -176,7 +190,11 @@ const Canvas = ({ width, height }: CanvasProps) => {
 
   const convertToCSV = (arr) => {
     const array = [Object.keys(arr[0])].concat(arr);
+    console.log(arr);
+    console.log(array);
     return array.map(item => {
+      console.log(Object.values(item));
+      console.log(Object.values(item).toString());
       return Object.values(item).toString()
     }).join('\n')
   }
@@ -202,14 +220,43 @@ const Canvas = ({ width, height }: CanvasProps) => {
     return jsonData;
   }
 
+  const coorJsonData = () => {
+    const data = jsonData(),
+      coorList = [
+        "Teardrop Coordinates", 
+        "Acetabulum Diameter Coordinates", 
+        "Acetabular Cup Perimeter Point", 
+        "Acetabulum Head Perimeter Point"
+      ];
+    coorList.map((key, i) => {
+      const coor = Object.values(coordinatesMap)[i+1].coor as Coordinate[];
+      data[key] = '"[' + coor.map(val => [val.x, val.y]).toString() + ']"';
+    })
+    console.log(data);
+    return data;
+  }
+
   const exportCsv = (filename, exportAll = false, text = false) => {
     const json = convertToCSV(exportAll ? listValues : [jsonData()]);
     downloadCsv(filename, json, text);
     
   }
 
+  const exportCoor = (filename, text = false) => {
+    const json = convertToCSV(listCoorValues);
+    downloadCsv(filename, json, text);
+  }
+
   const onPrevClick = () => {
-    setActiveItem(activeItem - 1);
+    const prevItem = activeItem - 1;
+    setActiveItem(prevItem);
+    updateCoordinates({
+      ...coordinatesMap,
+      [prevItem.toString()]: {
+        ...coordinatesMap[prevItem.toString()],
+        coor: []
+      }
+    });
   }
 
   const onNextClick = () => {
@@ -317,6 +364,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('oneData')}> Download CSV </Button> : '' }
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('textAllData', true, true)}> Download all text </Button> : '' }
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('allData', true)}> Download all CSV </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor('allCoordinates', true)}> Coor. text </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor('allCoordinates', false)}> Coor. CSV </Button> : '' }
       </Segment>
       </Segment>;
 };
