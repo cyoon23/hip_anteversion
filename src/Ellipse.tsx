@@ -3,15 +3,15 @@ import { Coordinate } from "./canvas";
 export const ellipse_parameters = (diameter_coor: [Coordinate, Coordinate], peripheral_pt: Coordinate): [number, number, number, number, number, number, number] => {
     const coordinates_list = [...diameter_coor, peripheral_pt];
     const midpt = midpoint(...diameter_coor);
-    const angle = -1 * calc_angle(...diameter_coor);
+    const angle = calc_angle(...diameter_coor);
     // Rotate each point of dots list 
-    const new_coor = coordinates_list.map(v => rotate(midpt, v, angle));
+    const new_coor = coordinates_list.map(v => rotate(midpt, v, -1 * angle));
     const major_axis_length = dist(...diameter_coor);
     const minor_axis_length = minor_axis(new_coor, midpt)*2;
     const axes: [number, number] = [~~major_axis_length/2, ~~minor_axis_length/2];
     const int_midpt: [number, number] = [~~midpt.x, ~~midpt.y];
     // Return the negative of the angle since ellipse is clockwise
-    return [...int_midpt, ...axes, -1 * angle, 0, 360];
+    return [...int_midpt, ...axes, angle, 0, 360];
 }
 
 const midpoint = (v1: Coordinate, v2: Coordinate): Coordinate => {
@@ -26,6 +26,11 @@ const calc_angle = (v1: Coordinate, v2: Coordinate) => {
    const y = v2.y - v1.y;
    const x = v2.x - v1.x;
    return Math.atan(y/x);
+}
+
+const acute_angle = (angle: number) => {
+    const negative = angle < 0 ? -1 : 1;
+    return Math.abs(angle) > 90 ? (180 - Math.abs(angle)) * negative : angle;
 }
 
 export const rotate = (origin: Coordinate, point: Coordinate, angle: number) => {
@@ -94,7 +99,7 @@ export const measure_gamma = (coor_list: Coordinate[]) => {
         dotp = dot(v1, v2),
         mag1 = dot(v1, v1)**0.5,
         mag2 = dot(v2, v2)**0.5;
-    return Math.acos(dotp/mag2/mag1) * 180/Math.PI;
+    return acute_angle(Math.acos(dotp/mag2/mag1) * 180/Math.PI);
 }
 
 export const measure_beta = (diameter_coor: [Coordinate, Coordinate], peripheral_pt: Coordinate, pt2: Coordinate, gamma: number) => {

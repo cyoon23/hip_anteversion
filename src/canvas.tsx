@@ -25,7 +25,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [gamma, measureGamma] = useState(0);
     const [beta, measureBeta] = useState(0);
     const [ratio, measureRatio] = useState(0);
-    const [lineWidth, setLineWidth] = useState(5);
+    const [lineWidth, setLineWidth] = useState(2);
     const [buttonColor, setColor] = useState('red');
     const [id, setId] = useState('');
     const [listValues, setValues] = useState([] as {}[]);
@@ -62,7 +62,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
           // Fill out dot
           ctx.fillStyle = buttonColor;
           ctx.beginPath();
-          ctx.arc(currNode.coor[0].x, currNode.coor[0].y, 4, 0, 2 * Math.PI);
+          ctx.arc(currNode.coor[0].x, currNode.coor[0].y, lineWidth, 0, 2 * Math.PI);
           ctx.fill();
         }
         if (currNode.type === 'line' && currNode.coor.length === 2) {
@@ -284,7 +284,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
         { activeItem > 0 ?
         <Grid columns={2} verticalAlign='middle'>
           <Grid.Column style={{display: 'flex', flexDirection: 'row'}}> 
-            Line width: <RangeStepInput min={1} max={10} value={lineWidth} step={1} onChange={onLineWidthChange} style={{marginLeft: '10px'}} /> 
+            Line width: <RangeStepInput min={0.5} max={5} value={lineWidth} step={0.1} onChange={onLineWidthChange} style={{marginLeft: '10px'}} /> 
           </Grid.Column>
         <Grid.Column floated='right'>
         {['red', 'blue', 'green', 'purple'].map(color => 
