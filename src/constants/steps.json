@@ -15,15 +15,15 @@
     "coor": []
 },
 "3": {
-    "text": "Click on any point along the acetabular cup perimeter that is visible to you.",
-    "supp": "This point allows us to complete the ellipse around the acetabular cup perimeter.",
+    "text": "Click on any point along the acetabular component superior perimeter that is visible to you.",
+    "supp": "This point allows us to complete the ellipse around the acetabular cup head.",
     "type": "ellipse",
     "parentNode": "2",
     "coor": []
 },
 "4": {
-    "text": "Click on any point along the acetabular head perimeter that is visible to you.",
-    "supp": "This point allows us to complete the ellipse around the acetabular cup head.",
+    "text": "Click on any point along the acetabular component inferior ellipse perimeter that is visible to you.",
+    "supp": "This point allows us to complete the ellipse around the acetabular cup perimeter.",
     "type": "ellipse",
     "parentNode": "2",
     "coor": []
