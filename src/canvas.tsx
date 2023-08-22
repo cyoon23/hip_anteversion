@@ -205,12 +205,13 @@ const Canvas = ({ width, height }: CanvasProps) => {
 
   const jsonData = () => {
     const ant = 48.05*ratio-0.3,
+      decimals = 2,
       jsonData = {
         "ID": id,
-        "Abduction Angle": gamma,
-        "S/L": ratio,
-        "Anteversion (Widmer)": ant,
-        "Anteversion (Liaw)": beta,
+        "Abduction Angle": gamma.toFixed(decimals),
+        "S/L": ratio.toFixed(decimals),
+        "Anteversion (Widmer)": ant.toFixed(decimals),
+        "Anteversion (Liaw)": beta.toFixed(decimals),
       };
     return jsonData;
   }
@@ -225,7 +226,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
       ];
     coorList.map((key, i) => {
       const coor = Object.values(coordinatesMap)[i+1].coor as Coordinate[];
-      data[key] = '"[' + coor.map(val => [val.x, val.y]).toString() + ']"';
+      data[key] = '"[' + coor.map(val => [val.x.toFixed(2), val.y.toFixed(2)]).toString() + ']"';
     })
     return data;
   }
