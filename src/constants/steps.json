@@ -3,9 +3,9 @@
     "coor": []
 },
 "1": {
-    "text": "Click at the end of each pelvic teardrop.",
-    "supp": "These two points will be connected to form the teardrop line.",
-    "type": "line",
+    "text": "Click at the vertex of the curve.",
+    "supp": "",
+    "type": "point",
     "coor": []
 },
 "2": {

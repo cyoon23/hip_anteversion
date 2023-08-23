@@ -71,6 +71,13 @@ const Canvas = ({ width, height }: CanvasProps) => {
       setWidth(i.width*scale);
       for (let idx=1; idx <= endIndex; idx++) {
         const currNode = coordinatesMap[idx.toString()];
+        if (currNode.type === 'point') {
+          // fill out dot
+          ctx.fillStyle = buttonColor;
+          ctx.beginPath();
+          ctx.arc(currNode.coor[0].x, currNode.coor[0].y, lineWidth, 0, 2 * Math.PI);
+          ctx.fill();
+        }
         if (currNode.type === 'line' && currNode.coor.length === 1) {
           // Fill out dot
           ctx.fillStyle = buttonColor;
@@ -157,7 +164,21 @@ const Canvas = ({ width, height }: CanvasProps) => {
   }
     
   const handleClick = (e) => {
-    if (!coordinatesMap[activeItem.toString()].coor.length) {
+    if (coordinatesMap[activeItem.toString()].type === 'point') {
+      const startCoor = {
+        x: e.nativeEvent.offsetX,
+        y: e.nativeEvent.offsetY
+      };
+      updateCoordinates({
+        ...coordinatesMap,
+        [activeItem.toString()]: {
+          ...coordinatesMap[activeItem.toString()],
+          coor: [startCoor]
+        }
+      });
+      setActiveItem(activeItem + 1);
+    }
+    else if (!coordinatesMap[activeItem.toString()].coor.length) {
       const startCoor = {
         x: e.nativeEvent.offsetX,
         y: e.nativeEvent.offsetY
@@ -256,7 +277,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
 
   const onNextClick = () => {
     if ((coordinatesMap[activeItem.toString()].type === 'ellipse' && coordinatesMap[activeItem.toString()].coor.length === 1) || 
-    (coordinatesMap[activeItem.toString()].type === 'line' && coordinatesMap[activeItem.toString()].coor.length === 2)) 
+    (coordinatesMap[activeItem.toString()].type === 'line' && coordinatesMap[activeItem.toString()].coor.length === 2) ||
+    coordinatesMap[activeItem.toString()].type === 'point') 
       setActiveItem(activeItem + 1);
   }
 
