@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import steps from './constants/steps.json';
-import { ellipse_parameters, measure_beta, measure_gamma, perp_line } from './Ellipse.tsx';
 import {RangeStepInput} from 'react-range-step-input';
 import { Button, Grid, Input, Segment } from 'semantic-ui-react';
+import { controlPoint, getDerivatives, quadraticFormula } from './quadratic.tsx';
 
 interface CanvasProps {
     width: number;
@@ -21,14 +21,13 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [coordinatesMap, updateCoordinates] = useState(steps);
     const [scale, saveScale] = useState(0);
     const [activeItem, setActiveItem] = useState(0);
-    const [gamma, measureGamma] = useState(0);
-    const [beta, measureBeta] = useState(0);
-    const [ratio, measureRatio] = useState(0);
     const [lineWidth, setLineWidth] = useState(2);
     const [buttonColor, setColor] = useState('red');
     const [id, setId] = useState('');
     const [listValues, setValues] = useState([] as {}[]);
-    const [listCoorValues, setCoorValues] = useState([] as {}[]);
+    const [qFormulaVars, setQFormVars] = useState({a: 0, b: 0, c: 0});
+    const [firstDerivative, setFirstDerivative] = useState(0);
+    const [secondDerivative, setSecondDerivative] = useState(1);
     let fileInputRef;
 
   // draw effect – each time isDrawing,
@@ -39,9 +38,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
   }, [buttonColor, lineWidth, coordinatesMap, activeItem]);
 
   useEffect(() => {
-    if (activeItem === 5) {
-      const newData = jsonData(),
-        coorData = coorJsonData();
+    if (activeItem === 4) {
+      const newData = jsonData();
       setValues(
         listValues.filter(
         val => 'ID' in val && val.ID === id).length > 0 ? 
@@ -49,82 +47,44 @@ const Canvas = ({ width, height }: CanvasProps) => {
             (val => 'ID' in val && val.ID === id ? newData : val)
           ) : [...listValues, newData]
         );
-      setCoorValues(
-        listCoorValues.filter(
-          val => 'ID' in val && val.ID === id).length > 0 ? 
-            listCoorValues.map(
-              (val => 'ID' in val && val.ID === id ? coorData : val)
-            ) : [...listCoorValues, coorData]
-      );
   }
-  }, [gamma, beta, ratio])
+  }, [qFormulaVars, firstDerivative, secondDerivative]);
 
   const restoreImage = (endIndex) => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d'); 
     if (!ctx) return;
     const i = new Image();
     i.src = file;
-    i.onload = () => {
+    i.onload = () => { 
       ctx.drawImage(i, 0, 0, i.width*scale, i.height*scale);
       ctx.strokeStyle = buttonColor;
       setWidth(i.width*scale);
       for (let idx=1; idx <= endIndex; idx++) {
-        const currNode = coordinatesMap[idx.toString()];
-        if (currNode.type === 'point') {
+        const node = coordinatesMap[idx.toString()],
+        currNode = node.parentNode.length ? coordinatesMap[node.parentNode] : node;
+        if (currNode.type === 'point' && currNode.coor.length > 0 && currNode.coor.length >= idx) {
           // fill out dot
           ctx.fillStyle = buttonColor;
           ctx.beginPath();
-          ctx.arc(currNode.coor[0].x, currNode.coor[0].y, lineWidth, 0, 2 * Math.PI);
+          ctx.arc(currNode.coor[idx-1].x, currNode.coor[idx-1].y, lineWidth, 0, 2 * Math.PI);
           ctx.fill();
         }
-        if (currNode.type === 'line' && currNode.coor.length === 1) {
-          // Fill out dot
-          ctx.fillStyle = buttonColor;
-          ctx.beginPath();
-          ctx.arc(currNode.coor[0].x, currNode.coor[0].y, lineWidth, 0, 2 * Math.PI);
-          ctx.fill();
-        }
-        if (currNode.type === 'line' && currNode.coor.length === 2) {
-          const [startCoor, endCoor] = extendLine(currNode.coor);
-          // draw the line 
-          ctx.beginPath();
-          ctx.moveTo(startCoor.x, startCoor.y);
-          ctx.lineTo(endCoor.x, endCoor.y);
-          ctx.closePath();
-          ctx.lineWidth = lineWidth;
-          ctx.stroke();
-        }
-        else if (currNode.type === 'ellipse' && 'parentNode' in currNode && [...currNode.coor, ...coordinatesMap[currNode.parentNode].coor].length === 3) {
-          const diameter_coor = coordinatesMap[currNode.parentNode].coor;
-          ctx.beginPath();
-          ctx.ellipse(...ellipse_parameters(diameter_coor, currNode.coor[0]));
-          ctx.closePath();
-          ctx.stroke();
-          if (idx.toString() === '4') {
-            const [pt1, pt2] = perp_line(diameter_coor, currNode.coor[0]);
-            ctx.beginPath();
-            ctx.moveTo(pt1.x, pt1.y);
-            ctx.lineTo(pt2.x, pt2.y);
-            ctx.closePath();
-            ctx.stroke();
-            const gamma = measure_gamma([...coordinatesMap['1'].coor, ...diameter_coor]);
-            measureGamma(gamma);
-            const [beta, ratio] = measure_beta(diameter_coor, coordinatesMap['3'].coor[0], pt2, gamma);
-            measureBeta(beta);
-            measureRatio(ratio);
-          }
+        if (currNode.type === 'point' && currNode.coor.length === 3) {
+          ctx.beginPath();  
+          const form = quadraticFormula(currNode.coor[0].x, currNode.coor[0].y, currNode.coor[1].x, currNode.coor[1].y);
+          setQFormVars(form);
+          const cp = controlPoint(form.a, currNode.coor[0].y, currNode.coor[1].x, currNode.coor[1].y);
+          ctx.moveTo(currNode.coor[1].x, currNode.coor[1].y); 
+          ctx.quadraticCurveTo(cp.x, cp.y, currNode.coor[2].x, currNode.coor[2].y);
+          ctx.stroke()
+          const derivs = getDerivatives(form.a, currNode.coor[0].y, currNode.coor[1].y);
+          setFirstDerivative(derivs.xp);
+          setSecondDerivative(derivs.xpp);
         }
       }
     }
-  }
-
-  const extendLine = (coor) => {
-    const [startCoor, endCoor] = coor,
-      m = (endCoor.y - startCoor.y)/(endCoor.x - startCoor.x),
-      y1 = m * (0 - startCoor.x) + startCoor.y,
-      y2 = m * (fileWidth - startCoor.x) + startCoor.y;
-    return [{x: 0, y: y1}, {x: fileWidth, y: y2}];
   }
 
   const drawImage = (url) => {
@@ -168,12 +128,13 @@ const Canvas = ({ width, height }: CanvasProps) => {
       const startCoor = {
         x: e.nativeEvent.offsetX,
         y: e.nativeEvent.offsetY
-      };
+      },
+      parentNode = coordinatesMap[activeItem.toString()].parentNode;
       updateCoordinates({
         ...coordinatesMap,
-        [activeItem.toString()]: {
-          ...coordinatesMap[activeItem.toString()],
-          coor: [startCoor]
+        [parentNode]: {
+          ...coordinatesMap[parentNode],
+          coor: [...coordinatesMap[parentNode].coor, startCoor]
         }
       });
       setActiveItem(activeItem + 1);
@@ -190,21 +151,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
           coor: [startCoor]
         }
       });
-      if (coordinatesMap[activeItem.toString()].type === 'ellipse') setActiveItem(activeItem + 1);
-    }
-    else if (coordinatesMap[activeItem.toString()].type === 'line' && coordinatesMap[activeItem.toString()].coor.length === 1) {
-      const endCoor = {
-        x: e.nativeEvent.offsetX,
-        y: e.nativeEvent.offsetY
-      };
-      updateCoordinates({
-        ...coordinatesMap,
-        [activeItem.toString()]: {
-          ...coordinatesMap[activeItem.toString()],
-          coor: [...coordinatesMap[activeItem.toString()].coor, endCoor]
-        }
-      });
-      setActiveItem(activeItem + 1);
     }
   }
 
@@ -225,42 +171,20 @@ const Canvas = ({ width, height }: CanvasProps) => {
   }
 
   const jsonData = () => {
-    const ant = 48.05*ratio-0.3,
-      decimals = 2,
-      jsonData = {
-        "ID": id,
-        "Abduction Angle": gamma.toFixed(decimals),
-        "S/L": ratio.toFixed(decimals),
-        "Anteversion (Widmer)": ant.toFixed(decimals),
-        "Anteversion (Liaw)": beta.toFixed(decimals),
-      };
-    return jsonData;
-  }
-
-  const coorJsonData = () => {
-    const data = jsonData(),
-      coorList = [
-        "Teardrop Coordinates", 
-        "Acetabulum Diameter Coordinates", 
-        "Acetabular Cup Perimeter Point", 
-        "Acetabulum Head Perimeter Point"
-      ];
-    coorList.map((key, i) => {
-      const coor = Object.values(coordinatesMap)[i+1].coor as Coordinate[];
-      data[key] = '"[' + coor.map(val => [val.x.toFixed(2), val.y.toFixed(2)]).toString() + ']"';
-    })
-    return data;
+    return {
+      "ID": id,
+      "a": qFormulaVars.a,
+      "b": qFormulaVars.b,
+      "c": qFormulaVars.c,
+      "First Derivative": firstDerivative,
+      "Second Derivative": secondDerivative,
+    };
   }
 
   const exportCsv = (filename, exportAll = false, text = false) => {
     const json = convertToCSV(exportAll ? listValues : [jsonData()]);
     downloadCsv(filename, json, text);
     
-  }
-
-  const exportCoor = (filename, text = false) => {
-    const json = convertToCSV(listCoorValues);
-    downloadCsv(filename, json, text);
   }
 
   const onPrevClick = () => {
@@ -276,9 +200,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
   }
 
   const onNextClick = () => {
-    if ((coordinatesMap[activeItem.toString()].type === 'ellipse' && coordinatesMap[activeItem.toString()].coor.length === 1) || 
-    (coordinatesMap[activeItem.toString()].type === 'line' && coordinatesMap[activeItem.toString()].coor.length === 2) ||
-    coordinatesMap[activeItem.toString()].type === 'point') 
+    if (coordinatesMap[activeItem.toString()].type === 'point') 
       setActiveItem(activeItem + 1);
   }
 
@@ -381,8 +303,6 @@ const Canvas = ({ width, height }: CanvasProps) => {
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('oneData')}> Download CSV </Button> : '' }
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('textAllData', true, true)}> Download all text </Button> : '' }
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('allData', true)}> Download all CSV </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor('allCoordinates', true)}> Coor. text </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor('allCoordinates', false)}> Coor. CSV </Button> : '' }
       </Segment>
       </Segment>;
 };

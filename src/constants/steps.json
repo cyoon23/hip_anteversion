@@ -6,31 +6,26 @@
     "text": "Click at the vertex of the curve.",
     "supp": "",
     "type": "point",
+    "parentNode": "1",
     "coor": []
 },
 "2": {
-    "text": "Click at the either end of the acetabular cup diameter.",
-    "supp": "These two points will form the long axis of the ellipse tracing the acetabular cup perimeter.",
-    "type": "line",
+    "text": "Click at one end of the curve.",
+    "supp": "",
+    "type": "point",
+    "parentNode": "1",
     "coor": []
 },
 "3": {
-    "text": "Click on any point along the acetabular component superior perimeter that is visible to you.",
-    "supp": "This point allows us to complete the ellipse around the acetabular cup head.",
-    "type": "ellipse",
-    "parentNode": "2",
+    "text": "Click at the other end of the curve.",
+    "supp": "",
+    "type": "point",
+    "parentNode": "1",
     "coor": []
 },
 "4": {
-    "text": "Click on any point along the acetabular component inferior ellipse perimeter that is visible to you.",
-    "supp": "This point allows us to complete the ellipse around the acetabular cup perimeter.",
-    "type": "ellipse",
-    "parentNode": "2",
-    "coor": []
-},
-"5": {
     "text": "Click to download data.",
-    "supp": "Download the current image's measurements, or  measurements of all annotated images, as a text or CSV file. To annotate another image, simply upload a new image.",
+    "supp": "Download the current image's curvature as a text or CSV file. To annotate another image, simply upload a new image.",
     "type": "",
     "parentNode": "",
     "coor": []
