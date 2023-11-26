@@ -109,13 +109,14 @@ export const measure_beta = (diameter_coor: [Coordinate, Coordinate], peripheral
         s = minor_axis(coors, midpt)*2,
         pt1 = rotate(midpt, {x: midpt.x, y: midpt.y + s/2}, -1*angle),
         t1 = dist(pt1, pt2),
-        ratio = s/2/t1,
-        csc = 1/Math.sin(gamma),
+        ratio = s/t1,
+        gammarad = gamma * Math.PI/180,
+        csc = 1/Math.sin(gammarad),
         isin = Math.asin(ratio/(2-ratio)),
         tan = Math.tan(isin*csc),
         alpha = Math.atan(tan),
         tan1 = Math.tan(alpha + 5.46*Math.PI/180),
-        beta = Math.atan(tan1*Math.sin(gamma)) * 180/Math.PI;
+        beta = Math.atan(tan1*Math.sin(gammarad)) * 180/Math.PI;
         return [beta, ratio];
 }
 
