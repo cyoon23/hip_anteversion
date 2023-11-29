@@ -18,6 +18,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [file, setFile] = useState('');
     const [fileWidth, setWidth] = useState(0);
+    const [dir, setDir] = useState([]);
+    const [dirIndex, setDirIndex] = useState(-1);
     const [coordinatesMap, updateCoordinates] = useState(steps);
     const [scale, saveScale] = useState(0);
     const [activeItem, setActiveItem] = useState(0);
@@ -142,15 +144,22 @@ const Canvas = ({ width, height }: CanvasProps) => {
   }
 
   const onImageChange = event => {
-      if (event.target.files && event.target.files[0]) {
-        let img = event.target.files[0];
-        const url = URL.createObjectURL(img);
-        setFile(url);
-        drawImage(url);
-       onClearAllClick();
-      }
-      setId(event.target.value.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, ""));
-    };
+    if (event.target.files && event.target.files.length) {
+      setDir(event.target.files);
+      setDirIndex(0);
+      onSetImage(event.target.files, 0);
+    }
+  };
+  
+  const onSetImage = (files, idx) => {
+    let img = files[idx];
+    const url = URL.createObjectURL(img);
+    setFile(url);
+    drawImage(url);
+    onClearAllClick();
+    setId(img.name.split('.')[0]);
+    if (idx > 0) setDirIndex(idx);
+  }
 
   const onTextChange = (e) => {
     setId(e.target.value);
@@ -307,7 +316,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
         <Grid.Row columns={2} verticalAlign='middle'>
         <Grid.Column floated='left'> 
       <Button
-        content="Choose File"
+        content="Choose File(s)"
         labelPosition="left"
         icon="file"
         onClick={() => fileInputRef.click()}
@@ -319,12 +328,14 @@ const Canvas = ({ width, height }: CanvasProps) => {
         hidden
         ref={refParam => fileInputRef = refParam}
         onChange={onImageChange} 
+        multiple 
       />
       Image ID: <Input 
                     placeholder="Image ID" 
                     value={id} 
                     onChange={onTextChange}
                   />
+      {dir.length > 1 ? ' Image ' + (dirIndex+1).toString() + ' of ' +  (dir.length).toString() : ''}
         </Grid.Column>
         <Grid.Column floated='right'> 
         { activeItem > 0 ?
@@ -365,6 +376,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv(firstThroughLastElementStr, true)}> Download all CSV </Button> : '' }
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor(allDataWithCoorStr, true)}> All with coor text </Button> : '' }
         { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor(allDataWithCoorStr, false)}> All with coor CSV </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 && dir.length - 1 > dirIndex ? <Button onClick={() => {onSetImage(dir, dirIndex + 1)}}> Next Image in Directory </Button> : '' }
       </Segment>
       </Segment>;
 };
