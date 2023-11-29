@@ -209,9 +209,9 @@ const Canvas = ({ width, height }: CanvasProps) => {
       jsonData = {
         "ID": id,
         "Abduction Angle": gamma.toFixed(decimals),
-        "S/L": ratio.toFixed(decimals),
-        "Anteversion (Widmer)": ant.toFixed(decimals),
-        "Anteversion (Liaw)": beta.toFixed(decimals),
+        "S/TL Ratio": ratio.toFixed(decimals),
+        "Anteversion Angle (Widmer)": ant.toFixed(decimals),
+        "Anteversion Angle (Liaw)": beta.toFixed(decimals),
       };
     return jsonData;
   }
@@ -297,6 +297,10 @@ const Canvas = ({ width, height }: CanvasProps) => {
   const onColorButtonClick = (e) => {
     setColor(e.target.value);
   }
+  
+  const firstElementStr = listValues.length ? listValues[0]['ID'] : 'currData',
+    firstThroughLastElementStr = listValues.length ? firstElementStr + '-' + listValues[listValues.length - 1]['ID'] : 'allData',
+    allDataWithCoorStr = listValues.length ? firstThroughLastElementStr + "+Coors" : 'allData+Coors';
 
   return <Segment basic padded='very'>
       <Grid>
@@ -355,12 +359,12 @@ const Canvas = ({ width, height }: CanvasProps) => {
         { activeItem > 0 ? <Button onClick={onUndoClick}> Undo </Button> : '' }
         {activeItem > 0 ? <Button onClick={onClearClick}> Clear </Button> : '' }
         { activeItem > 0 ? <Button onClick={onClearAllClick}> Clear All </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('textData', false, true)}> Download text </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('oneData')}> Download CSV </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('textAllData', true, true)}> Download all text </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv('allData', true)}> Download all CSV </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor('allCoordinates', true)}> Coor. text </Button> : '' }
-        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor('allCoordinates', false)}> Coor. CSV </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv(firstElementStr, false, true)}> Download text </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv(firstElementStr)}> Download CSV </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv(firstThroughLastElementStr, true, true)}> Download all text </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCsv(firstThroughLastElementStr, true)}> Download all CSV </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor(allDataWithCoorStr, true)}> All with coor text </Button> : '' }
+        { activeItem === Object.keys(steps).length - 1 ? <Button onClick={() => exportCoor(allDataWithCoorStr, false)}> All with coor CSV </Button> : '' }
       </Segment>
       </Segment>;
 };

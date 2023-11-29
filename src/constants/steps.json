@@ -3,13 +3,13 @@
     "coor": []
 },
 "1": {
-    "text": "Click at the end of each pelvic teardrop.",
+    "text": "Click at the inferior end of the left and right pelvic teardrop.",
     "supp": "These two points will be connected to form the teardrop line.",
     "type": "line",
     "coor": []
 },
 "2": {
-    "text": "Click at the either end of the acetabular cup diameter.",
+    "text": "Click at the left and right end of the acetabular cup diameter.",
     "supp": "These two points will form the long axis of the ellipse tracing the acetabular cup perimeter.",
     "type": "line",
     "coor": []
@@ -22,15 +22,15 @@
     "coor": []
 },
 "4": {
-    "text": "Click on any point along the acetabular component inferior ellipse perimeter that is visible to you.",
+    "text": "Click on the most superior point along the acetabular component inferior ellipse perimeter that is visible to you.",
     "supp": "This point allows us to complete the ellipse around the acetabular cup perimeter.",
     "type": "ellipse",
     "parentNode": "2",
     "coor": []
 },
 "5": {
-    "text": "Click to download data.",
-    "supp": "Download the current image's measurements, or  measurements of all annotated images, as a text or CSV file. To annotate another image, simply upload a new image.",
+    "text": "Click Choose File to annotate another image and download data.",
+    "supp": "Annotate another image, or download data for the current image or all images annotated thus far. Data includes Abduction Angle, S/TL Ratio, and Anteversion Angle, which can be downloaded as a text or CSV file.",
     "type": "",
     "parentNode": "",
     "coor": []
