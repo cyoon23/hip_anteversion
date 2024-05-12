@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import steps from './constants/steps.json';
+import laterality_dict from './constants/laterality_dict.json';
 import { ellipse_parameters, measure_beta, measure_gamma, perp_line } from './Ellipse.tsx';
 import {RangeStepInput} from 'react-range-step-input';
-import { Button, ButtonGroup, ButtonOr, Grid, GridColumn, Input, Segment } from 'semantic-ui-react';
+import { Button, ButtonGroup, ButtonOr, Checkbox, Grid, Input, Segment } from 'semantic-ui-react';
 
 interface CanvasProps {
     width: number;
@@ -32,6 +33,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [listValues, setValues] = useState([] as {}[]);
     const [listCoorValues, setCoorValues] = useState([] as {}[]);
     const [laterality, setLaterality] = useState("");
+    const [unclear, setUnclear] = useState(false);
     let fileInputRef;
 
   // draw effect – each time isDrawing,
@@ -149,19 +151,21 @@ const Canvas = ({ width, height }: CanvasProps) => {
       setDir(event.target.files);
       setDirIndex(0);
       onSetImage(event.target.files, 0);
-      setLaterality('');
+      // setLaterality('');
     }
   };
   
   const onSetImage = (files, idx) => {
     let img = files[idx];
     const url = URL.createObjectURL(img);
+    const new_id = img.name.split('.')[0];
     setFile(url);
     drawImage(url);
     onClearAllClick();
-    setId(img.name.split('.')[0]);
+    setId(new_id);
     if (idx > 0) setDirIndex(idx);
-    setLaterality('');
+    // setLaterality('');
+    setLaterality(new_id in laterality_dict ? laterality_dict[new_id] : '')
   }
 
   const onTextChange = (e) => {
@@ -224,7 +228,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
         "S/TL Ratio": ratio.toFixed(decimals),
         "Anteversion Angle (Widmer)": ant.toFixed(decimals),
         "Anteversion Angle (Liaw)": beta.toFixed(decimals),
-        "Laterality": laterality
+        "Laterality": laterality,
+        "Unclear teardrop line": unclear
       };
     return jsonData;
   }
@@ -392,6 +397,12 @@ const Canvas = ({ width, height }: CanvasProps) => {
              : '' }
         </Grid.Column>
         </Grid.Row>
+        {activeItem === 1 ? <Grid.Row>
+          <Checkbox 
+            label={'Teardrop line is unclear.'} 
+            onClick={() => setUnclear(!unclear)}
+          />
+        </Grid.Row> : ''}
       </Grid>
       <Segment basic>
         <h2> { activeItem > 0 ? `Step ${activeItem}: ${steps[activeItem.toString()].text}` : '' } </h2>
