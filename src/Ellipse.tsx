@@ -59,7 +59,8 @@ const minor_axis = (dots_list, midpoint) => {
     const y = dots_list[2].y;
     const h = midpoint.x;
     const k = midpoint.y;
-    const a = Math.abs(h - dots_list[0].x);
+    // const a = Math.abs(h - dots_list[0].x);
+    const a = dist(dots_list[0].x, dots_list[1].x)/2;
     const num = (y - k)**2;
     const denom = 1 - (((x-h)**2)/(a**2));
     const b = (num/denom)**0.5;
@@ -113,9 +114,9 @@ export const measure_beta = (diameter_coor: [Coordinate, Coordinate], peripheral
         gammarad = gamma * Math.PI/180,
         csc = 1/Math.sin(gammarad),
         isin = Math.asin(ratio/(2-ratio)),
-        tan = Math.tan(isin*csc),
+        tan = Math.tan(isin),
         alpha = Math.atan(tan),
-        tan1 = Math.tan(alpha + 5.46*Math.PI/180),
+        tan1 = Math.tan(alpha*csc + 5.46*Math.PI/180),
         beta = Math.atan(tan1*Math.sin(gammarad)) * 180/Math.PI;
         return [beta, ratio];
 }
