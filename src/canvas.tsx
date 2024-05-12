@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import steps from './constants/steps.json';
 import { ellipse_parameters, measure_beta, measure_gamma, perp_line } from './Ellipse.tsx';
 import {RangeStepInput} from 'react-range-step-input';
-import { Button, Grid, Input, Segment } from 'semantic-ui-react';
+import { Button, ButtonGroup, ButtonOr, Grid, GridColumn, Input, Segment } from 'semantic-ui-react';
 
 interface CanvasProps {
     width: number;
@@ -31,6 +31,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     const [id, setId] = useState('');
     const [listValues, setValues] = useState([] as {}[]);
     const [listCoorValues, setCoorValues] = useState([] as {}[]);
+    const [laterality, setLaterality] = useState("");
     let fileInputRef;
 
   // draw effect – each time isDrawing,
@@ -148,6 +149,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
       setDir(event.target.files);
       setDirIndex(0);
       onSetImage(event.target.files, 0);
+      setLaterality('');
     }
   };
   
@@ -159,6 +161,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
     onClearAllClick();
     setId(img.name.split('.')[0]);
     if (idx > 0) setDirIndex(idx);
+    setLaterality('');
   }
 
   const onTextChange = (e) => {
@@ -221,6 +224,7 @@ const Canvas = ({ width, height }: CanvasProps) => {
         "S/TL Ratio": ratio.toFixed(decimals),
         "Anteversion Angle (Widmer)": ant.toFixed(decimals),
         "Anteversion Angle (Liaw)": beta.toFixed(decimals),
+        "Laterality": laterality
       };
     return jsonData;
   }
@@ -306,6 +310,11 @@ const Canvas = ({ width, height }: CanvasProps) => {
   const onColorButtonClick = (e) => {
     setColor(e.target.value);
   }
+
+  const onLateralityClick = (e) => {
+    if (laterality !== e.target.value) setLaterality(e.target.value);
+    else setLaterality('');
+  }
   
   const firstElementStr = listValues.length ? listValues[0]['ID'] : 'currData',
     firstThroughLastElementStr = listValues.length ? firstElementStr + '-' + listValues[listValues.length - 1]['ID'] : 'allData',
@@ -315,35 +324,61 @@ const Canvas = ({ width, height }: CanvasProps) => {
       <Grid>
         <Grid.Row columns={2} verticalAlign='middle'>
         <Grid.Column floated='left'> 
-      <Button
-        content="Choose File(s)"
-        labelPosition="left"
-        icon="file"
-        onClick={() => fileInputRef.click()}
-        style={{ marginRight: "10px"}}
-      />
-      <input
-        id="inputFile"
-        type="file"
-        hidden
-        ref={refParam => fileInputRef = refParam}
-        onChange={onImageChange} 
-        multiple 
-      />
-      Image ID: <Input 
-                    placeholder="Image ID" 
-                    value={id} 
-                    onChange={onTextChange}
-                  />
-      {dir.length > 1 ? ' Image ' + (dirIndex+1).toString() + ' of ' +  (dir.length).toString() : ''}
+          <Button
+            content="Choose File(s)"
+            labelPosition="left"
+            icon="file"
+            onClick={() => fileInputRef.click()}
+            style={{ marginRight: "10px"}}
+          />
+          <input
+            id="inputFile"
+            type="file"
+            hidden
+            ref={refParam => fileInputRef = refParam}
+            onChange={onImageChange} 
+            multiple 
+          />
+          Image ID: <Input 
+                        placeholder="Image ID" 
+                        value={id} 
+                        onChange={onTextChange}
+                      />
+          { activeItem > 0 ? 
+          <ButtonGroup style={{ marginLeft: "20px"}}>
+          <Button 
+            onClick={onLateralityClick}
+            value="Left"
+            color={laterality === "Left" ? 'twitter' : undefined}
+          >
+            Left
+          </Button>
+          <ButtonOr /> 
+          <Button 
+            onClick={onLateralityClick}
+            value="Right"
+            color={laterality === "Right" ? 'twitter' : undefined}
+          >
+            Right
+          </Button>
+        </ButtonGroup>
+          : ''}
         </Grid.Column>
         <Grid.Column floated='right'> 
         { activeItem > 0 ?
-        <Grid columns={2} verticalAlign='middle'>
           <Grid.Column style={{display: 'flex', flexDirection: 'row'}}> 
-            Line width: <RangeStepInput min={0.5} max={5} value={lineWidth} step={0.1} onChange={onLineWidthChange} style={{marginLeft: '10px'}} /> 
-          </Grid.Column>
-        <Grid.Column floated='right'>
+          <div style={{marginRight: '50px'}}> {dir.length > 1 ? 
+              ' Image ' + (dirIndex+1).toString() + ' of ' +  (dir.length).toString() + '' : ''}
+            </div>
+            Line width: 
+            <RangeStepInput 
+              min={0.5} 
+              max={5} 
+              value={lineWidth} 
+              step={0.1} 
+              onChange={onLineWidthChange} 
+              style={{marginLeft: '10px', marginRight: '20px'}} 
+            /> 
         {['red', 'blue', 'green', 'purple'].map(color => 
           <Button 
             circular
@@ -354,9 +389,8 @@ const Canvas = ({ width, height }: CanvasProps) => {
           />
             )} 
         </Grid.Column>
-            </Grid>
              : '' }
-             </Grid.Column>
+        </Grid.Column>
         </Grid.Row>
       </Grid>
       <Segment basic>
