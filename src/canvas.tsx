@@ -323,12 +323,12 @@ const Canvas = ({ width, height }: CanvasProps) => {
         style={{ marginRight: "10px"}}
       />
       <input
-        id="inputFile"  
+        id="inputFile"
         type="file"
         hidden
         ref={refParam => fileInputRef = refParam}
         onChange={onImageChange} 
-        multiple
+        multiple 
       />
       Image ID: <Input 
                     placeholder="Image ID" 

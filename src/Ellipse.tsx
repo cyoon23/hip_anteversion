@@ -59,8 +59,7 @@ const minor_axis = (dots_list, midpoint) => {
     const y = dots_list[2].y;
     const h = midpoint.x;
     const k = midpoint.y;
-    // const a = Math.abs(h - dots_list[0].x);
-    const a = dist(dots_list[0].x, dots_list[1].x)/2;
+    const a = Math.abs(h - dots_list[0].x);
     const num = (y - k)**2;
     const denom = 1 - (((x-h)**2)/(a**2));
     const b = (num/denom)**0.5;
