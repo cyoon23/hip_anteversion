@@ -348,18 +348,18 @@ const Canvas = ({ width, height }: CanvasProps) => {
           <ButtonGroup style={{ marginLeft: "20px"}}>
           <Button 
             onClick={onLateralityClick}
-            value="Left"
-            color={laterality === "Left" ? 'twitter' : undefined}
-          >
-            Left
-          </Button>
-          <ButtonOr /> 
-          <Button 
-            onClick={onLateralityClick}
             value="Right"
             color={laterality === "Right" ? 'twitter' : undefined}
           >
             Right
+          </Button>
+          <ButtonOr /> 
+          <Button 
+            onClick={onLateralityClick}
+            value="Left"
+            color={laterality === "Left" ? 'twitter' : undefined}
+          >
+            Left
           </Button>
         </ButtonGroup>
           : ''}
