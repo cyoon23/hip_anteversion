@@ -111,12 +111,11 @@ export const measure_beta = (diameter_coor: [Coordinate, Coordinate], peripheral
         t1 = dist(pt1, pt2),
         ratio = s/t1,
         gammarad = gamma * Math.PI/180,
-        csc = 1/Math.sin(gammarad),
-        isin = Math.asin(ratio/(2-ratio)),
-        tan = Math.tan(isin),
-        alpha = Math.atan(tan),
-        tan1 = Math.tan(alpha*csc + 5.46*Math.PI/180),
-        beta = Math.atan(tan1*Math.sin(gammarad)) * 180/Math.PI;
+        a = Math.asin(ratio/(2-ratio)),
+        z = Math.tan(a) * 1/Math.sin(gammarad),
+        y = Math.atan(z) + 5.46*Math.PI/180,
+        x = Math.tan(y) * Math.sin(gammarad),
+        beta = Math.atan(x) * 180/Math.PI;
         return [beta, ratio];
 }
 
